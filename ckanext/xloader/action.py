@@ -142,7 +142,8 @@ def xloader_submit(context, data_dict):
     data = {
         'api_key': utils.get_xloader_user_apitoken(),
         'job_type': 'xloader_to_datastore',
-        'result_url': callback_url,
+        #'result_url': callback_url,
+        'result_url': 'http://xloader:5000',
         'metadata': {
             'ignore_hash': data_dict.get('ignore_hash', False),
             #'ckan_url': config['ckan.site_url'],
