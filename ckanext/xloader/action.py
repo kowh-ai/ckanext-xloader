@@ -152,6 +152,7 @@ def xloader_submit(context, data_dict):
             'original_url': resource_dict.get('url'),
         }
     }
+    log.info('##BJ## in action.py -- data is: %s', data)
     timeout = config.get('ckanext.xloader.job_timeout', '3600')
     try:
         job = enqueue_job(
