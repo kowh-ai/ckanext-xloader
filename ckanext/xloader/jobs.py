@@ -246,6 +246,7 @@ def _download_resource_data(resource, data, api_key, logger):
     '''
     # check scheme
     url = resource.get('url')
+    logger.info('##BJ## Downloading resource: %s', url)
     url_parts = urlsplit(url)
     scheme = url_parts.scheme
     if scheme not in ('http', 'https', 'ftp'):
