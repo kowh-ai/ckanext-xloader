@@ -248,6 +248,7 @@ def _download_resource_data(resource, data, api_key, logger):
     url = resource.get('url')
     logger.info('##BJ## Downloading resource: %s', url)
     url_parts = urlsplit(url)
+    logger.info('##BJ## url_parts: %s', url_parts)
     scheme = url_parts.scheme
     if scheme not in ('http', 'https', 'ftp'):
         raise JobError(
