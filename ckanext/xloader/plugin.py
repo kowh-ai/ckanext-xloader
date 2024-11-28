@@ -68,13 +68,12 @@ class xloaderPlugin(plugins.SingletonPlugin):
         else:
             self.ignore_hash = False
 
-        for config_option in ("ckan.site_url",):
-            if not config_.get(config_option):
-                raise Exception(
-                    "Config option `{0}` must be set to use ckanext-xloader.".format(
-                        config_option
-                    )
-                )
+        site_url_configs = ("ckan.site_url", "ckanext.xloader.site_url")
+        log.info('###BJ### site_url_configs: %s', site_url_configs)
+        if not any(site_url_configs):
+            raise Exception(
+                f"One of config options {site_url_configs} must be set to use ckanext-xloader."
+            )
 
     # IPipeValidation
 
