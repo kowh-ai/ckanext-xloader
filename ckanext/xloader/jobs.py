@@ -85,6 +85,12 @@ def xloader_data_into_datastore(input):
                           api_key=input['api_key'],
                           job_dict=job_dict)
 
+    xloader_site_url = config.get('ckanext.xloader.site_url')
+    log.info('###BJ### in jobs.py - xloader_site_url =  %s', xloader_site_url)
+
+    ckan_site_url = config.get('ckan.site_url')
+    log.info('###BJ### in jobs.py - ckan_site_url =  %s', ckan_site_url)
+
     job_id = get_current_job().id
     errored = False
 

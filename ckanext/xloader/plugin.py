@@ -69,6 +69,7 @@ class xloaderPlugin(plugins.SingletonPlugin):
             self.ignore_hash = False
 
         site_url_configs = ("ckan.site_url", "ckanext.xloader.site_url")
+
         log.info('###BJ### site_url_configs: %s', site_url_configs)
         if not any(site_url_configs):
             raise Exception(
