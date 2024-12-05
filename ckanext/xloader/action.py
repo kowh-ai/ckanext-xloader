@@ -153,6 +153,14 @@ def xloader_submit(context, data_dict):
             'original_url': resource_dict.get('url'),
         }
     }
+
+   
+    xloader_site_url = config.get('ckanext.xloader.site_url')
+    log.info('###BJ### xloader_site_url =  %s', xloader_site_url)
+
+    ckan_site_url = config.get('ckan.site_url')
+    log.info('###BJ### ckan_site_url =  %s', ckan_site_url)
+
     if custom_queue != rq_jobs.DEFAULT_QUEUE_NAME:
         # Don't automatically retry if it's a custom run
         data['metadata']['tries'] = jobs.MAX_RETRIES
