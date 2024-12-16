@@ -168,6 +168,7 @@ def get_xloader_user_apitoken():
     site_user.
     """
     api_token = p.toolkit.config.get('ckanext.xloader.api_token', None)
+    log.info('###BJ### API Token: %s' % api_token)  # log the api token
     if api_token:
         return api_token
 
