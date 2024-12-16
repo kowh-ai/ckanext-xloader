@@ -292,6 +292,9 @@ def _download_resource_data(resource, data, api_key, logger):
     '''
     # check scheme
     url = resource.get('url')
+    logger.info('### BJ ### URL is set to: %s', url)
+    logger.info('### BJ ### The URL should be changed here in _download_resource_data')
+    logger.info('### BJ ### It assumes the resource URL is contactable from the the XLoader server')
     url_parts = urlsplit(url)
     scheme = url_parts.scheme
     if scheme not in ('http', 'https', 'ftp'):
