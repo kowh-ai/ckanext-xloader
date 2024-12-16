@@ -12,7 +12,7 @@ import traceback
 import sys
 
 from psycopg2 import errors
-from six.moves.urllib.parse import urlsplit
+from six.moves.urllib.parse import urlsplit, urlparse, urlunparse
 import requests
 from rq import get_current_job
 import sqlalchemy as sa
@@ -295,6 +295,12 @@ def _download_resource_data(resource, data, api_key, logger):
     logger.info('### BJ ### URL is set to: %s', url)
     logger.info('### BJ ### The URL should be changed here in _download_resource_data')
     logger.info('### BJ ### It assumes the resource URL is contactable from the the XLoader server')
+    original_url = url
+    parsed_url = urlparse(original_url)
+    updated_url = parsed_url._replace(netloc='ckan-dev:5000')
+    final_url = urlunparse(updated_url)
+    logger.info('### BJ ### The URL is updated to: %s', final_url)
+    url = final_url
     url_parts = urlsplit(url)
     scheme = url_parts.scheme
     if scheme not in ('http', 'https', 'ftp'):
