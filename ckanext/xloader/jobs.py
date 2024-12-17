@@ -81,11 +81,18 @@ def xloader_data_into_datastore(input):
     # be a duplicate or not
     job_dict = dict(metadata=input['metadata'],
                     status='running')
-    callback_xloader_hook(result_url=input['result_url'],
+    original_result_url = input['result_url']
+    
+    parsed_result_url = urlparse(original_result_url)
+    updated_result_url = parsed_result_url._replace(netloc='ckan-dev:5000')
+    final_result_url = urlunparse(updated_result_url)
+    logger.info('### BJ ### The Result URL is updated to: %s', final_result_url)
+    result_url = final_result_url
+    callback_xloader_hook(result_url=result_url,
                           api_key=input['api_key'],
                           job_dict=job_dict)
 
-    log.info('###BJ### in jobs.py - result_url =  %s', input['result_url'])
+    log.info('###BJ### in jobs.py - result_url =  %s', result_url)
 
     xloader_site_url = config.get('ckanext.xloader.site_url')
     log.info('###BJ### in jobs.py - xloader_site_url =  %s', xloader_site_url)
