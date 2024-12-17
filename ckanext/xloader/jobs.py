@@ -82,7 +82,6 @@ def xloader_data_into_datastore(input):
     job_dict = dict(metadata=input['metadata'],
                     status='running')
     original_result_url = input['result_url']
-    
     parsed_result_url = urlparse(original_result_url)
     updated_result_url = parsed_result_url._replace(netloc='ckan-dev:5000')
     final_result_url = urlunparse(updated_result_url)
@@ -159,8 +158,8 @@ def xloader_data_into_datastore(input):
         errored = True
     finally:
         # job_dict is defined in xloader_hook's docstring
-        log.info('###BJ### about to call callback_xloader_hook to set job status, result_url is set to:  %s', input['result_url'])
-        is_saved_ok = callback_xloader_hook(result_url=input['result_url'],
+        log.info('###BJ### in finally - about to call callback_xloader_hook to set job status, result_url is set to:  %s', result_url)
+        is_saved_ok = callback_xloader_hook(result_url=result_url,
                                             api_key=input['api_key'],
                                             job_dict=job_dict)
         errored = errored or not is_saved_ok
