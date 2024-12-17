@@ -86,7 +86,7 @@ def xloader_data_into_datastore(input):
     parsed_result_url = urlparse(original_result_url)
     updated_result_url = parsed_result_url._replace(netloc='ckan-dev:5000')
     final_result_url = urlunparse(updated_result_url)
-    logger.info('### BJ ### The Result URL is updated to: %s', final_result_url)
+    log.info('###BJ### The Result URL is updated to: %s', final_result_url)
     result_url = final_result_url
     callback_xloader_hook(result_url=result_url,
                           api_key=input['api_key'],
@@ -307,7 +307,7 @@ def _download_resource_data(resource, data, api_key, logger):
     parsed_url = urlparse(original_url)
     updated_url = parsed_url._replace(netloc='ckan-dev:5000')
     final_url = urlunparse(updated_url)
-    logger.info('### BJ ### The URL is updated to: %s', final_url)
+    logger.info('###BJ### The URL is updated to: %s', final_url)
     url = final_url
     url_parts = urlsplit(url)
     scheme = url_parts.scheme
