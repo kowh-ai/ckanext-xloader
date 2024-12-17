@@ -152,6 +152,7 @@ def xloader_data_into_datastore(input):
         errored = True
     finally:
         # job_dict is defined in xloader_hook's docstring
+        log.info('###BJ### about to call callback_xloader_hook to set job status, result_url is set to:  %s', input['result_url'])
         is_saved_ok = callback_xloader_hook(result_url=input['result_url'],
                                             api_key=input['api_key'],
                                             job_dict=job_dict)
@@ -464,6 +465,7 @@ def callback_xloader_hook(result_url, api_key, job_dict):
 
     try:
         result = requests.post(
+            
             result_url,
             data=json.dumps(job_dict, cls=DatetimeJsonEncoder),
             verify=SSL_VERIFY,
