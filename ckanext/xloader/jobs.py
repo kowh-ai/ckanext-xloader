@@ -314,6 +314,7 @@ def _download_resource_data(resource, data, api_key, logger):
         callback_url.rstrip('/'), resource_uri)
     
     url = callback_url
+    url_parts = urlsplit(url)
     
     # fetch the resource data
     logger.info('Fetching from: {0}'.format(url))
