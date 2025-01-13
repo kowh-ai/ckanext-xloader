@@ -15,7 +15,10 @@ from psycopg2 import errors
 from six.moves.urllib.parse import urlsplit, urlparse, urlunparse
 import requests
 from rq import get_current_job
+from rq.timeouts import JobTimeoutException
 import sqlalchemy as sa
+
+from urllib.parse import urljoin, urlunsplit
 
 from ckan import model
 from ckan.plugins.toolkit import get_action, asbool, enqueue_job, ObjectNotFound, config
@@ -79,25 +82,18 @@ def xloader_data_into_datastore(input):
     # First flag that this task is running, to indicate the job is not
     # stillborn, for when xloader_submit is deciding whether another job would
     # be a duplicate or not
+    
+    callback_url = config.get('ckanext.xloader.site_url') or config.get('ckan.site_url')
+    callback_url = urljoin(
+        callback_url.rstrip('/'), '/api/3/action/xloader_hook')
+    result_url = callback_url
+
     job_dict = dict(metadata=input['metadata'],
                     status='running')
-    original_result_url = input['result_url']
-    parsed_result_url = urlparse(original_result_url)
-    updated_result_url = parsed_result_url._replace(netloc='ckan-dev:5000')
-    final_result_url = urlunparse(updated_result_url)
-    log.info('###BJ### The Result URL is updated to: %s', final_result_url)
-    result_url = final_result_url
+    
     callback_xloader_hook(result_url=result_url,
                           api_key=input['api_key'],
                           job_dict=job_dict)
-
-    log.info('###BJ### in jobs.py - result_url =  %s', result_url)
-
-    xloader_site_url = config.get('ckanext.xloader.site_url')
-    log.info('###BJ### in jobs.py - xloader_site_url =  %s', xloader_site_url)
-
-    ckan_site_url = config.get('ckan.site_url')
-    log.info('###BJ### in jobs.py - ckan_site_url =  %s', ckan_site_url)
 
     job_id = get_current_job().id
     errored = False
@@ -158,7 +154,6 @@ def xloader_data_into_datastore(input):
         errored = True
     finally:
         # job_dict is defined in xloader_hook's docstring
-        log.info('###BJ### in finally - about to call callback_xloader_hook to set job status, result_url is set to:  %s', result_url)
         is_saved_ok = callback_xloader_hook(result_url=result_url,
                                             api_key=input['api_key'],
                                             job_dict=job_dict)
@@ -274,6 +269,13 @@ def xloader_data_into_datastore_(input, job_dict, logger):
                 logger.warning('Load using COPY failed: %s', e)
                 logger.info('Trying again with tabulator')
                 tabulator_load()
+    except JobTimeoutException as e:
+        try:
+            tmp_file.close()
+        except FileNotFoundError:
+            pass
+        logger.warning('Job timed out after %ss', RETRIED_JOB_TIMEOUT)
+        raise JobError('Job timed out after {}s'.format(RETRIED_JOB_TIMEOUT))
     except FileCouldNotBeLoadedError as e:
         logger.warning('Loading excerpt for this format not supported.')
         logger.error('Loading file raised an error: %s', e)
@@ -299,22 +301,20 @@ def _download_resource_data(resource, data, api_key, logger):
     '''
     # check scheme
     url = resource.get('url')
-    logger.info('###BJ### URL is set to: %s', url)
-    logger.info('###BJ### The URL should be changed here in _download_resource_data')
-    logger.info('###BJ### It assumes the resource URL is contactable from the the XLoader server')
-    original_url = url
-    parsed_url = urlparse(original_url)
-    updated_url = parsed_url._replace(netloc='ckan-dev:5000')
-    final_url = urlunparse(updated_url)
-    logger.info('###BJ### The URL is updated to: %s', final_url)
-    url = final_url
     url_parts = urlsplit(url)
     scheme = url_parts.scheme
     if scheme not in ('http', 'https', 'ftp'):
         raise JobError(
             'Only http, https, and ftp resources may be fetched.'
         )
-
+        
+    resource_uri = urlunsplit(('', '', url_parts.path, url_parts.query, url_parts.fragment))
+    callback_url = config.get('ckanext.xloader.site_url') or config.get('ckan.site_url')
+    callback_url = urljoin(
+        callback_url.rstrip('/'), resource_uri)
+    
+    url = callback_url
+    
     # fetch the resource data
     logger.info('Fetching from: {0}'.format(url))
     tmp_file = get_tmp_file(url)
@@ -381,6 +381,7 @@ def _download_resource_data(resource, data, api_key, logger):
         response.close()
         data['datastore_contains_all_records_of_source_file'] = False
     except requests.exceptions.HTTPError as error:
+        tmp_file.close()
         # status code error
         logger.debug('HTTP error: %s', error)
         raise HTTPError(
@@ -392,6 +393,7 @@ def _download_resource_data(resource, data, api_key, logger):
         raise JobError('Connection timed out after {}s'.format(
                        DOWNLOAD_TIMEOUT))
     except requests.exceptions.RequestException as e:
+        tmp_file.close()
         try:
             err_message = str(e.reason)
         except AttributeError:
@@ -400,6 +402,10 @@ def _download_resource_data(resource, data, api_key, logger):
         raise HTTPError(
             message=err_message, status_code=None,
             request_url=url, response=None)
+    except JobTimeoutException as e:
+        tmp_file.close()
+        logger.warning('Job timed out after %ss', RETRIED_JOB_TIMEOUT)
+        raise JobError('Job timed out after {}s'.format(RETRIED_JOB_TIMEOUT))
 
     logger.info('Downloaded ok - %s', printable_file_size(length))
     file_hash = m.hexdigest()
@@ -471,7 +477,6 @@ def callback_xloader_hook(result_url, api_key, job_dict):
 
     try:
         result = requests.post(
-            
             result_url,
             data=json.dumps(job_dict, cls=DatetimeJsonEncoder),
             verify=SSL_VERIFY,
