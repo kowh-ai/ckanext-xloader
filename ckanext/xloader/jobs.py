@@ -12,7 +12,7 @@ import traceback
 import sys
 
 from psycopg2 import errors
-from six.moves.urllib.parse import urlsplit, urlparse, urlunparse
+from six.moves.urllib.parse import urlsplit
 import requests
 from rq import get_current_job
 from rq.timeouts import JobTimeoutException
@@ -215,7 +215,11 @@ def xloader_data_into_datastore_(input, job_dict, logger):
         set_datastore_active(data, resource, logger)
         if 'result_url' in input:
             job_dict['status'] = 'running_but_viewable'
-            callback_xloader_hook(result_url=input['result_url'],
+            callback_url = config.get('ckanext.xloader.site_url') or config.get('ckan.site_url')
+            callback_url = urljoin(
+                callback_url.rstrip('/'), '/api/3/action/xloader_hook')
+            result_url = callback_url
+            callback_xloader_hook(result_url=result_url,
                                   api_key=api_key,
                                   job_dict=job_dict)
         logger.info('Data now available to users: %s', resource_ckan_url)
