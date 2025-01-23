@@ -296,8 +296,13 @@ def _download_resource_data(resource, data, api_key, logger):
     data['datastore_contains_all_records_of_source_file'] = False
     which will be saved to the resource later on.
     '''
-    # check scheme
+   
     url = resource.get('url')
+    logger.info('###BT### - in _download_resource_data BEFORE modify_resource_url: {0}'.format(url))
+    url = modify_resource_url(url)
+    logger.info('###BT### - in _download_resource_data AFTER modify_resource_url: {0}'.format(url))
+    
+    # check scheme
     url_parts = urlsplit(url)
     scheme = url_parts.scheme
     if scheme not in ('http', 'https', 'ftp'):
@@ -306,9 +311,6 @@ def _download_resource_data(resource, data, api_key, logger):
         )
     
     # fetch the resource data
-    logger.info('###BT### - in _download_resource_data BEFORE modify_resource_url: {0}'.format(url))
-    url = modify_resource_url(url)
-    logger.info('###BT### - in _download_resource_data AFTER modify_resource_url: {0}'.format(url))
     logger.info('Fetching from: {0}'.format(url))
     tmp_file = get_tmp_file(url)
     length = 0
