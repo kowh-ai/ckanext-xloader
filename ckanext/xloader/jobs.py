@@ -25,7 +25,7 @@ from ckan.plugins.toolkit import get_action, asbool, enqueue_job, ObjectNotFound
 
 from . import db, loader
 from .job_exceptions import JobError, HTTPError, DataTooBigError, FileCouldNotBeLoadedError
-from .utils import datastore_resource_exists, set_resource_metadata, get_ckan_url
+from .utils import datastore_resource_exists, set_resource_metadata, modify_resource_url, modify_ckan_url   
 
 try:
     from ckan.lib.api_token import get_user_from_token
@@ -83,14 +83,11 @@ def xloader_data_into_datastore(input):
     # stillborn, for when xloader_submit is deciding whether another job would
     # be a duplicate or not
     
-    callback_url = get_ckan_url()
-    callback_url = urljoin(
-        callback_url.rstrip('/'), '/api/3/action/xloader_hook')
 
     job_dict = dict(metadata=input['metadata'],
                     status='running')
-    
-    callback_xloader_hook(result_url=callback_url,
+
+    callback_xloader_hook(result_url=input['result_url'],
                           api_key=input['api_key'],
                           job_dict=job_dict)
 
@@ -212,13 +209,10 @@ def xloader_data_into_datastore_(input, job_dict, logger):
         loader.calculate_record_count(
             resource_id=resource['id'], logger=logger)
         set_datastore_active(data, resource, logger)
+
         if 'result_url' in input:
             job_dict['status'] = 'running_but_viewable'
-            callback_url = get_ckan_url()
-            callback_url = urljoin(
-                callback_url.rstrip('/'), '/api/3/action/xloader_hook')
-            
-            callback_xloader_hook(result_url=callback_url,
+            callback_xloader_hook(result_url=input['result_url'],
                                   api_key=api_key,
                                   job_dict=job_dict)
         logger.info('Data now available to users: %s', resource_ckan_url)
@@ -311,14 +305,16 @@ def _download_resource_data(resource, data, api_key, logger):
             'Only http, https, and ftp resources may be fetched.'
         )
         
-    resource_uri = urlunsplit(('', '', url_parts.path, url_parts.query, url_parts.fragment))
-    callback_url = get_ckan_url()
-    url = urljoin(
-        callback_url.rstrip('/'), resource_uri)
-    
-    url_parts = urlsplit(url) # reparse the url after the callback_url is set
+    #resource_uri = urlunsplit(('', '', url_parts.path, url_parts.query, url_parts.fragment))
+    #callback_url = modify_ckan_url()
+    #url = urljoin(
+    #    callback_url.rstrip('/'), resource_uri)
+    #url_parts = urlsplit(url) # reparse the url after the callback_url is set
     
     # fetch the resource data
+    logger.info('###BT### - in _download_resource_data BEFORE modify_resource_url: {0}'.format(url))
+    url = modify_resource_url(url)
+    logger.info('###BT### - in _download_resource_data AFTER modify_resource_url: {0}'.format(url))
     logger.info('Fetching from: {0}'.format(url))
     tmp_file = get_tmp_file(url)
     length = 0
@@ -478,6 +474,10 @@ def callback_xloader_hook(result_url, api_key, job_dict):
             header, key = 'Authorization', api_key
         headers[header] = key
 
+    log.info('###BJ### in callback_xloader_hook - result_url: %s', result_url)
+    log.info('###BJ### in callback_xloader_hook - job_dict: %s', job_dict)
+    result_url = modify_ckan_url(result_url, job_dict['metadata']['ckan_url'])
+    log.info('###BJ### in callback_xloader_hook - modified result_url: %s', result_url)
     try:
         result = requests.post(
             result_url,

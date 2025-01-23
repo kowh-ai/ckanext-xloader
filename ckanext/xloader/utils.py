@@ -2,6 +2,7 @@
 
 import json
 import datetime
+import re
 
 from six import text_type as str, binary_type
 
@@ -12,6 +13,8 @@ from decimal import Decimal
 
 import ckan.plugins as p
 from ckan.plugins.toolkit import config, h, _
+
+from urllib.parse import urljoin, urlunsplit, urlparse
 
 from .job_exceptions import JobError
 
@@ -176,26 +179,49 @@ def get_xloader_user_apitoken():
     log.info('###BJ### in utils.get_xloader_user_apitoken() - site_user[apikey]: %s', site_user["apikey"])   
     return site_user["apikey"]
 
-def get_ckan_url():
-    """ Returns the CKAN URL.
 
-    ckan may be behind a proxy, or more likely, within a docker network.
-    This method returns the URL set in the config file for the CKAN instance.
-    Containers within the same network ie: XLoader will be able to communicate with CKAN using this URL.
+def modify_ckan_url(result_url: str, ckan_url: str) -> str:
+    """ modifies the CKAN URL.
+
+    Needs to be updated
     """
-    ckan_url = config.get('ckanext.xloader.site_url', None)
-    if ckan_url:
-        return ckan_url
+    parsed_url = urlparse(result_url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    path_url = parsed_url.path
+    log.info("###BJ### in modify_ckan_url - result_base_url: %s", base_url)
+    log.info("###BJ### in modify_ckan_url - result_path_url: %s", path_url)
+    log.info("###BJ### in modify_ckan_url - ckan_url: %s", ckan_url)
+    if base_url != ckan_url:
+        result_url = urljoin(ckan_url, path_url)
+        log.info("###BJ### in modify_ckan_url - URL has been CHANGED!!!")
+         
+    return result_url
 
-    # Fall back to mandatory ckan.site_url
-    ckan_url = config.get('ckan.site_url')
-    if not ckan_url:
-        raise ValueError(
-            "The ckan.site_url configuration option is required but not set. "
-            "Please set this value in your CKAN configuration file."
-        )
     
-    return ckan_url
+def modify_resource_url(orig_ckan_url: str) -> str:
+    """Returns a potentially modified CKAN URL.
+    
+    Needs to be updated
+    """
+    
+    xloader_site_url = config.get('ckanext.xloader.site_url')
+    ckan_site_url = config.get('ckan.site_url')
+
+    parsed_url = urlparse(orig_ckan_url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+
+    # If the base URL matches the CKAN site URL and xloader_site_url is set, modify the URL
+    if base_url == ckan_site_url and xloader_site_url:
+        modified_ckan_url = urljoin(xloader_site_url, parsed_url.path)
+        if parsed_url.query:
+            modified_ckan_url += f"?{parsed_url.query}"
+        if parsed_url.fragment:
+            modified_ckan_url += f"#{parsed_url.fragment}"
+        return modified_ckan_url
+
+    return orig_ckan_url
+
+
 
 def set_resource_metadata(update_dict):
     '''
