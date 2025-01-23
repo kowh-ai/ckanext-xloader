@@ -150,7 +150,7 @@ def xloader_data_into_datastore(input):
         errored = True
     finally:
         # job_dict is defined in xloader_hook's docstring
-        is_saved_ok = callback_xloader_hook(result_url=result_url,
+        is_saved_ok = callback_xloader_hook(result_url=input['result_url'],
                                             api_key=input['api_key'],
                                             job_dict=job_dict)
         errored = errored or not is_saved_ok
@@ -304,12 +304,6 @@ def _download_resource_data(resource, data, api_key, logger):
         raise JobError(
             'Only http, https, and ftp resources may be fetched.'
         )
-        
-    #resource_uri = urlunsplit(('', '', url_parts.path, url_parts.query, url_parts.fragment))
-    #callback_url = modify_ckan_url()
-    #url = urljoin(
-    #    callback_url.rstrip('/'), resource_uri)
-    #url_parts = urlsplit(url) # reparse the url after the callback_url is set
     
     # fetch the resource data
     logger.info('###BT### - in _download_resource_data BEFORE modify_resource_url: {0}'.format(url))
