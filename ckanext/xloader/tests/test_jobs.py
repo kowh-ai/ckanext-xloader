@@ -91,6 +91,25 @@ class TestXLoaderJobs(helpers.FunctionalRQTestBase):
         resource = helpers.call_action("resource_show", id=data["metadata"]["resource_id"])
         assert resource["datastore_contains_all_records_of_source_file"]
 
+    def test_external_url_download(self, cli, data):
+        # Modify the data to use an external URL
+        data['metadata']['original_url'] = 'https://example.com/test.csv'
+    
+        # Create a mock response for the external URL
+        def mock_external_response(download_url, headers):
+            resp = Response()
+            resp.raw = io.BytesIO(_TEST_FILE_CONTENT.encode())
+            resp.headers = {'content-type': 'text/csv'}
+            return resp
+    
+        self.enqueue(jobs.xloader_data_into_datastore, [data])
+        with mock.patch("ckanext.xloader.jobs.get_response", mock_external_response):
+            stdout = cli.invoke(ckan, ["jobs", "worker", "--burst"]).output
+            assert "Express Load completed" in stdout
+
+        resource = helpers.call_action("resource_show", id=data["metadata"]["resource_id"])
+        assert resource["datastore_contains_all_records_of_source_file"]
+
     def test_xloader_ignore_hash(self, cli, data):
         self.enqueue(jobs.xloader_data_into_datastore, [data])
         with mock.patch("ckanext.xloader.jobs.get_response", get_response):
