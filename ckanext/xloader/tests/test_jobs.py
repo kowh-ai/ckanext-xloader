@@ -74,6 +74,7 @@ def data(create_with_upload, apikey):
         },
     }
 
+
 @pytest.mark.usefixtures("clean_db", "with_plugins")
 class TestXLoaderJobs(helpers.FunctionalRQTestBase):
 
@@ -143,3 +144,4 @@ class TestSetResourceMetadata(object):
         assert resource["datastore_contains_all_records_of_source_file"]
         assert resource["datastore_active"]
         assert resource["ckan_url"] == "http://www.ckan.org/"
+
