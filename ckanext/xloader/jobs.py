@@ -296,9 +296,10 @@ def _download_resource_data(resource, data, api_key, logger):
     data['datastore_contains_all_records_of_source_file'] = False
     which will be saved to the resource later on.
     '''
-   
+    logger.info('###BJ### --> _download_resource_data - whole resource is: %s', resource)
     url = resource.get('url')
     url = modify_resource_url(url)
+    logger.info('###BJ### --> _download_resource_data - MODIFIED url is: %s', url)
     
     # check scheme
     url_parts = urlsplit(url)
