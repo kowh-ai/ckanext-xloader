@@ -171,37 +171,34 @@ def get_xloader_user_apitoken():
     site_user.
     """
     api_token = p.toolkit.config.get('ckanext.xloader.api_token', None)
-    log.info('###BJ### in utils.get_xloader_user_apitoken() - API Token: %s', api_token)
     if api_token:
         return api_token
 
     site_user = p.toolkit.get_action('get_site_user')({'ignore_auth': True}, {})
-    log.info('###BJ### in utils.get_xloader_user_apitoken() - site_user[apikey]: %s', site_user["apikey"])   
     return site_user["apikey"]
 
 
 def modify_ckan_url(result_url: str, ckan_url: str) -> str:
-    """ modifies the CKAN URL.
-
-    Needs to be updated
+    """ modifies the CKAN URL
+    
+    If the base URL of the result_url is different from the CKAN site URL,
+    then the result_url is modified to be an absolute URL using the CKAN site URL.
     """
+
     parsed_url = urlparse(result_url)
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-    path_url = parsed_url.path
-    log.info("###BJ### in modify_ckan_url - result_base_url: %s", base_url)
-    log.info("###BJ### in modify_ckan_url - result_path_url: %s", path_url)
-    log.info("###BJ### in modify_ckan_url - ckan_url: %s", ckan_url)
     if base_url != ckan_url:
+        path_url = parsed_url.path
         result_url = urljoin(ckan_url, path_url)
-        log.info("###BJ### in modify_ckan_url - URL has been CHANGED!!!")
          
     return result_url
 
     
 def modify_resource_url(orig_ckan_url: str) -> str:
-    """Returns a potentially modified CKAN URL.
+    """ Returns a potentially modified CKAN URL.
     
-    Needs to be updated
+    If the base URL matches the CKAN site URL and xloader_site_url is set, modify the URL
+    otherwise return the original URL.
     """
     
     xloader_site_url = config.get('ckanext.xloader.site_url')

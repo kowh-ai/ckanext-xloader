@@ -298,9 +298,7 @@ def _download_resource_data(resource, data, api_key, logger):
     '''
    
     url = resource.get('url')
-    logger.info('###BT### - in _download_resource_data BEFORE modify_resource_url: {0}'.format(url))
     url = modify_resource_url(url)
-    logger.info('###BT### - in _download_resource_data AFTER modify_resource_url: {0}'.format(url))
     
     # check scheme
     url_parts = urlsplit(url)
@@ -470,10 +468,7 @@ def callback_xloader_hook(result_url, api_key, job_dict):
             header, key = 'Authorization', api_key
         headers[header] = key
 
-    log.info('###BJ### in callback_xloader_hook - result_url: %s', result_url)
-    log.info('###BJ### in callback_xloader_hook - job_dict: %s', job_dict)
     result_url = modify_ckan_url(result_url, job_dict['metadata']['ckan_url'])
-    log.info('###BJ### in callback_xloader_hook - modified result_url: %s', result_url)
     try:
         result = requests.post(
             result_url,
